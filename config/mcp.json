@@ -1,0 +1,65 @@
+{
+  "mcpServers": {
+    "coding-tools": {
+      "command": "uv",
+      "args": [
+        "run", "--directory", "__REPO__",
+        "python", "mcp_server/coding_tools.py", "--root", "__SANDBOX__"
+      ],
+      "env": {}
+    },
+    "web-tools": {
+      "command": "uv",
+      "args": [
+        "run", "--directory", "__REPO__",
+        "python", "mcp_server/web_tools.py"
+      ],
+      "env": {}
+    },
+    "docker-tools": {
+      "command": "uv",
+      "args": [
+        "run", "--directory", "__REPO__",
+        "python", "mcp_server/docker_tools.py"
+      ],
+      "env": {}
+    },
+    "codebase-memory": {
+      "command": "__CODEBASE_MEMORY_BIN__",
+      "args": [],
+      "env": {}
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {
+        "MEMORY_FILE_PATH": "__REPO__/.agent-memory.json"
+      }
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "env": {}
+    },
+    "git": {
+      "command": "uvx",
+      "args": ["mcp-server-git"],
+      "env": {}
+    },
+    "time": {
+      "command": "uvx",
+      "args": ["mcp-server-time"],
+      "env": {}
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "env": {}
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "env": {}
+    }
+  }
+}

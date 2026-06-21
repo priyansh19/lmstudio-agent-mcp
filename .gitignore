@@ -1,0 +1,9 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.uv/
+.DS_Store
+*.log
+.agent-memory.json
+.bridge.log
