@@ -64,6 +64,61 @@ Installed by default. Verified package names/versions.
 | `sqlite` | `mcp-server-sqlite` (uvx) | DB file path | Query local SQLite |
 | `puppeteer` | `@modelcontextprotocol/server-puppeteer` | (none) | Alt browser automation |
 | `sentry` | `mcp-server-sentry` (uvx) | Auth token | Inspect error/issue data |
+| `think-delegate` | local (this repo) | Anthropic or OpenAI API key | **Local SLM → cloud expert**: `deep_think`, `latest_knowledge` |
+
+---
+
+## Think-delegate — local SLM calls a cloud expert on demand
+
+For day-to-day work you use a **small local model** in LM Studio. When something
+needs ultra reasoning or knowledge after your cutoff, the **local model** calls
+`think-delegate` — it does not replace your chat model.
+
+```
+You: "Fix this race condition — use deep_think if you're stuck"
+Local SLM → deep_think(task, context, ultra=true)
+         → Anthropic API (Sonnet/Opus)
+         ← expert analysis
+Local SLM → coding-tools / git → implements the fix
+```
+
+Install (Claude Code CLI + subscription login — **no API key**):
+
+```bash
+# One-time: install CLI and log in with your Claude subscription
+claude auth login
+
+uv run python scripts/install_to_lmstudio.py --only think-delegate
+```
+
+Toggle `think-delegate` on in LM Studio. Paste `config/lmstudio-system-prompt.md`
+so the local model knows when to delegate.
+
+| Tool | When to call |
+| --- | --- |
+| `deep_think` | Architecture, subtle bugs, security, complex design (`ultra=true` → Opus) |
+| `latest_knowledge` | Recent APIs, versions, current facts (optional web search first) |
+| `delegate_status` | Check CLI + config |
+
+Env vars (in `~/.lmstudio/mcp.json`):
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `THINK_PROVIDER` | `claude-cli` | `claude-cli` (subscription) or `anthropic` / `openai` (API billing) |
+| `THINK_MODEL` | `sonnet` | Standard escalation (CLI alias or full model id) |
+| `THINK_DEEP_MODEL` | `opus` | `ultra=true` tier |
+| `THINK_USE_SUBSCRIPTION` | `1` | Strips `ANTHROPIC_API_KEY` so CLI uses subscription, not API |
+| `CLAUDE_CLI` | auto | Path to `claude` binary if not on PATH |
+| `CLAUDE_CLI_TIMEOUT` | `300` | Max seconds per delegation |
+
+**Do not set `ANTHROPIC_API_KEY`** if you want subscription pricing — the API key
+forces pay-per-token billing even when the CLI is installed.
+
+Example prompts you can type:
+
+- *"Use deep_think on this deadlock — include the stack trace in context."*
+- *"I need latest knowledge on FastMCP 2.x breaking changes."*
+- *"Escalate to expert: review this auth design for OWASP gaps."*
 
 ---
 

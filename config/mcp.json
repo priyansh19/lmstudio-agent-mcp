@@ -60,6 +60,19 @@
       "command": "npx",
       "args": ["-y", "@playwright/mcp@latest"],
       "env": {}
+    },
+    "think-delegate": {
+      "command": "uv",
+      "args": [
+        "run", "--directory", "__REPO__",
+        "python", "mcp_server/think_delegate.py"
+      ],
+      "env": {
+        "THINK_PROVIDER": "claude-cli",
+        "THINK_MODEL": "sonnet",
+        "THINK_DEEP_MODEL": "opus",
+        "THINK_USE_SUBSCRIPTION": "1"
+      }
     }
   }
 }

@@ -115,6 +115,28 @@ step_prereqs() {
 }
 
 # --------------------------------------------------------------------------- #
+# STEP 1b — macOS /tmp (LM Studio model load requires writable /tmp)
+# --------------------------------------------------------------------------- #
+step_macos_tmp() {
+  [[ "$(uname)" == "Darwin" ]] || return 0
+  step "1b" "macOS /tmp permissions (LM Studio model loading)"
+  if bash "$REPO/scripts/fix_macos_tmp.sh" 2>/dev/null; then
+    ok "/tmp writable"
+    return 0
+  fi
+  info "/tmp is not writable — LM Studio may fail with PermissionError on model load"
+  if $OPT_YES || confirm "Attempt to repair /private/tmp now (requires sudo)?"; then
+    if bash "$REPO/scripts/fix_macos_tmp.sh" --fix; then
+      ok "/tmp repaired"
+    else
+      info "Manual fix: ./scripts/fix_macos_tmp.sh --fix  (see SETUP.md if sudo fails)"
+    fi
+  else
+    info "Skipped — run later: ./scripts/fix_macos_tmp.sh --fix"
+  fi
+}
+
+# --------------------------------------------------------------------------- #
 # STEP 2 — Python dependencies
 # --------------------------------------------------------------------------- #
 step_python() {
@@ -165,10 +187,24 @@ step_code_intel() {
 step_lmstudio_mcp() {
   step 5 "LM Studio MCP servers → ~/.lmstudio/mcp.json"
   info "Installs: coding-tools, web-tools, docker-tools, codebase-memory,"
-  info "  memory, git, time, context7, playwright"
+  info "  memory, git, time, context7, playwright, think-delegate"
   info "Removes deprecated: filesystem, fetch"
   uv run python scripts/install_to_lmstudio.py --sandbox "$SANDBOX"
   ok "LM Studio MCP config updated (backup saved)"
+}
+
+# --------------------------------------------------------------------------- #
+# STEP 5b — think-delegate (Claude CLI escalation for local SLMs)
+# --------------------------------------------------------------------------- #
+step_think_delegate() {
+  step "5b" "think-delegate (local SLM → Claude CLI subscription)"
+  info "Escalate hard reasoning via deep_think / latest_knowledge — no API key."
+  if $OPT_YES || confirm "Install think-delegate + verify Claude CLI?"; then
+    SANDBOX="$SANDBOX" bash "$REPO/scripts/setup_think_delegate.sh" || info "think-delegate setup had warnings"
+    ok "think-delegate configured"
+  else
+    info "Skipped — run later: ./scripts/setup_think_delegate.sh"
+  fi
 }
 
 # --------------------------------------------------------------------------- #
@@ -262,7 +298,8 @@ print_finish() {
   bold "SETUP COMPLETE"
   echo
   info "What you have now:"
-  info "  • LM Studio MCP tools     → ~/.lmstudio/mcp.json"
+  info "  • LM Studio MCP tools     → ~/.lmstudio/mcp.json (incl. think-delegate)"
+  info "  • Claude escalation       → deep_think via Claude CLI subscription"
   info "  • OpenClaw (if configured) → local-agent/local/current (swap models in LM Studio only)"
   info "  • Bridge auto-start       → ~/Library/LaunchAgents/com.lmstudio-agent.bridge.plist"
   info "  • Sandbox                 → $SANDBOX"
@@ -292,11 +329,13 @@ main() {
   $OPT_MINIMAL && info "Mode: --minimal (skip optional connectors)"
 
   step_prereqs
+  step_macos_tmp
   step_python
   $OPT_DEPS_ONLY && { ok "Deps-only mode — done."; exit 0; }
   step_sandbox
   step_code_intel
   step_lmstudio_mcp
+  step_think_delegate
   step_github
   step_optional_connectors
   step_openclaw

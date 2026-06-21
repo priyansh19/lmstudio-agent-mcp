@@ -81,6 +81,22 @@
       "command": "uvx",
       "args": ["mcp-server-sentry", "--auth-token", "REPLACE_ME"],
       "env": {}
+    },
+
+    "think-delegate": {
+      "_about": "Local SLM → Claude Code CLI (subscription, no API key). deep_think / latest_knowledge. Set THINK_PROVIDER=anthropic only if you want pay-per-token API instead.",
+      "command": "uv",
+      "args": [
+        "run", "--directory", "__REPO__",
+        "python", "mcp_server/think_delegate.py"
+      ],
+      "env": {
+        "THINK_PROVIDER": "claude-cli",
+        "THINK_MODEL": "sonnet",
+        "THINK_DEEP_MODEL": "opus",
+        "THINK_USE_SUBSCRIPTION": "1",
+        "CLAUDE_CLI_TIMEOUT": "300"
+      }
     }
   }
 }

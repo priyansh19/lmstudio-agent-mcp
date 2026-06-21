@@ -144,10 +144,12 @@ GIT_EMAIL="guptapriyansh1907@gmail.com" \
 | Step | Action |
 |------|--------|
 | 1 | Install Homebrew, uv, Node, LM Studio CLI |
+| 1b | **Fix macOS `/tmp` permissions** (LM Studio model load) |
 | 2 | `uv sync` — Python dependencies |
 | 3 | Choose workspace sandbox (default `~/Desktop`) |
 | 4 | Install `codebase-memory-mcp`, seed memory, index this repo |
 | 5 | Install MCP servers into `~/.lmstudio/mcp.json` |
+| 5b | **think-delegate** — Claude CLI escalation (subscription, no API key) |
 | 6 | GitHub — git identity, keychain, `github` + `github-watch` MCP (optional) |
 | 7 | Google / Brave / Firecrawl / Slack (optional) |
 | 8 | OpenClaw → bridge config (optional) |
@@ -375,6 +377,7 @@ uv run python agent/local_agent.py --root "$HOME/Desktop" \
 
 | Problem | Fix |
 |---|---|
+| **`PermissionError: /tmp/tmp...` when loading model** | Run `./scripts/fix_macos_tmp.sh --fix` or re-run `./bootstrap.sh` (step 1b). Expected: `drwxrwxrwt` on `/private/tmp` |
 | MCP server fails to start | Check LM Studio Developer Logs; re-run `uv run python scripts/install_to_lmstudio.py` |
 | `git` MCP error "not a valid Git repository" | Fixed — git server no longer requires a fixed repo path |
 | Bridge not running after reboot | `launchctl print gui/$(id -u)/com.lmstudio-agent.bridge` |
@@ -382,6 +385,7 @@ uv run python agent/local_agent.py --root "$HOME/Desktop" \
 | OpenClaw still uses Claude | `openclaw models status` → should show `local-agent/local/current` |
 | Memory empty in chat | Paste system prompt; run `seed_memory.py`; model may skip tools on small models |
 | GitHub push fails | Re-run `setup_github.sh` with fresh token |
+| think-delegate fails | Install Claude CLI + `claude auth login`. Do not set `ANTHROPIC_API_KEY` on that server |
 | codebase-memory not found | Re-run bootstrap step 4 |
 
 **Logs:**
@@ -420,6 +424,8 @@ lmstudio-agent-mcp/
     ├── setup_openclaw_lmstudio.py
     ├── setup_github.sh
     ├── install_bridge_launchagent.sh
+    ├── fix_macos_tmp.sh          ← repair /tmp for LM Studio model loading
+    ├── setup_think_delegate.sh   ← Claude CLI escalation MCP
     └── seed_memory.py
 ```
 
