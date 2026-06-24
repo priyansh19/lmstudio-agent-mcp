@@ -8,34 +8,11 @@ All application code lives in [`lmstudio/`](./lmstudio/).
 
 ## Architecture
 
-Full diagram: **[Architecture_Daigram.excalidraw](./Architecture_Daigram.excalidraw)**
-
-```mermaid
-flowchart TB
-  UP[User Prompt] --> SC[Score Prompt]
-  SC --> SA[Local LLM Scoring Agent]
-  SA -->|score ≥ 7| LA[Local LLM Agent]
-  SA -->|score < 7| TA[Triaging Agent]
-  TA --> MCP[MCP think-delegate]
-  MCP --> CL[Claude Chat]
-  CL --> R1[Response]
-
-  UP --> LA
-  LA --> WM[Working Memory / Context]
-  LA --> SP[System Prompt]
-  LA --> CH[Chat History]
-  LA --> PM[Procedural Memory — Skill.md]
-  LA --> SM[Semantic Memory — Vector RAG top-k]
-  LA --> EM[Episodic Memory — Vector RAG top-k]
-  LA --> R2[Response]
-
-  R1 --> SAVE[Save Responses / Activities]
-  R2 --> SAVE
-  SAVE --> SUM[Summarizer Agent]
-  SUM -->|every N chats| DIST[Distill into facts]
-  DIST --> SM
-  DIST --> EM
-```
+<p align="center">
+    <picture>
+        <img width="1423" height="557" alt="Image" src="https://github.com/user-attachments/assets/01bc939e-7a73-4164-aad5-83ab50c63219" />
+    </picture>
+</p>
 
 | Phase | Status | Component |
 |---|---|---|
