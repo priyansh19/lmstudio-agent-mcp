@@ -1,0 +1,102 @@
+{
+  "_comment": "These servers need API keys / OAuth. Fill the placeholders, then run: python scripts/install_to_lmstudio.py --include-keys",
+
+  "mcpServers": {
+    "github": {
+      "_about": "Full GitHub API (Claude-parity): repos, branches, files, issues, PRs, code search, releases, Actions, gists. Token: https://github.com/settings/tokens scopes repo workflow read:org",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_REPLACE_ME" }
+    },
+
+    "github-watch": {
+      "_about": "Complements github MCP: watch PRs/issues/repos and poll for CI/review/merge changes (gh_watch, gh_poll). Same token as github.",
+      "command": "uv",
+      "args": [
+        "run", "--directory", "__LMSTUDIO__",
+        "python", "servers/github_watch_tools.py"
+      ],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_REPLACE_ME" }
+    },
+
+    "google-workspace": {
+      "_about": "Gmail, Calendar, Drive, Docs, Sheets, Slides. Needs a Google Cloud OAuth client (Desktop type). See CATALOG.md > Google Workspace for the 5-minute setup.",
+      "command": "uvx",
+      "args": ["workspace-mcp", "--tools", "gmail", "calendar", "drive", "docs", "sheets"],
+      "env": {
+        "GOOGLE_OAUTH_CLIENT_ID": "REPLACE_ME.apps.googleusercontent.com",
+        "GOOGLE_OAUTH_CLIENT_SECRET": "REPLACE_ME",
+        "OAUTHLIB_INSECURE_TRANSPORT": "1",
+        "USER_GOOGLE_EMAIL": "REPLACE_ME"
+      }
+    },
+
+    "slack": {
+      "_about": "Read/post Slack messages. Create a bot at https://api.slack.com/apps",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "xoxb-REPLACE_ME",
+        "SLACK_TEAM_ID": "T_REPLACE_ME"
+      }
+    },
+
+    "brave-search": {
+      "_about": "Web/local search via Brave. Free key at https://brave.com/search/api/",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": { "BRAVE_API_KEY": "REPLACE_ME" }
+    },
+
+    "firecrawl": {
+      "_about": "High-quality web scraping/crawling to clean markdown. Key at https://firecrawl.dev",
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp"],
+      "env": { "FIRECRAWL_API_KEY": "fc-REPLACE_ME" }
+    },
+
+    "postgres": {
+      "_about": "Query/inspect a PostgreSQL database. Replace the connection string.",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://user:pass@localhost:5432/dbname"],
+      "env": {}
+    },
+
+    "sqlite": {
+      "_about": "Query a local SQLite database file.",
+      "command": "uvx",
+      "args": ["mcp-server-sqlite", "--db-path", "__SANDBOX__/example.db"],
+      "env": {}
+    },
+
+    "puppeteer": {
+      "_about": "Chromium browser automation (alternative to playwright). No key, but heavier.",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "env": {}
+    },
+
+    "sentry": {
+      "_about": "Inspect Sentry issues/errors. Auth token from your Sentry account.",
+      "command": "uvx",
+      "args": ["mcp-server-sentry", "--auth-token", "REPLACE_ME"],
+      "env": {}
+    },
+
+    "think-delegate": {
+      "_about": "Local SLM → Claude Code CLI (subscription, no API key). deep_think / latest_knowledge. Set THINK_PROVIDER=anthropic only if you want pay-per-token API instead.",
+      "command": "uv",
+      "args": [
+        "run", "--directory", "__LMSTUDIO__",
+        "python", "servers/think_delegate.py"
+      ],
+      "env": {
+        "THINK_PROVIDER": "claude-cli",
+        "THINK_MODEL": "sonnet",
+        "THINK_DEEP_MODEL": "opus",
+        "THINK_USE_SUBSCRIPTION": "1",
+        "CLAUDE_CLI_TIMEOUT": "300"
+      }
+    }
+  }
+}

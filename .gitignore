@@ -5,5 +5,8 @@ __pycache__/
 .uv/
 .DS_Store
 *.log
-.agent-memory.json
-.bridge.log
+lmstudio/.agent-memory.json
+lmstudio/.bridge.log
+lmstudio/.vector-memory.db
+lmstudio/.vector-db-report.json
+lmstudio/.architecture-e2e-report.json

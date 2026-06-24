@@ -1,0 +1,7 @@
+{
+  "_comment": "Phase 4 — procedural memory via Skill.md files merged into system prompt.",
+  "enabled": true,
+  "skill_filenames": ["Skill.md", "SKILL.md", "skill.md"],
+  "skills_dirs": ["skills"],
+  "include_workspace_skills": true
+}

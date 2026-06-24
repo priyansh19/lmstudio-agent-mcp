@@ -1,0 +1,10 @@
+{
+  "_comment": "Phase 2 — semantic + episodic vector RAG (see Architecture_Daigram.excalidraw). Requires an embedding model loaded in LM Studio.",
+  "enabled": true,
+  "semantic_top_k": 5,
+  "episodic_top_k": 5,
+  "min_score": 0.25,
+  "auto_save_episodes": true,
+  "summarizer_enabled": true,
+  "summarize_every_n": 10
+}

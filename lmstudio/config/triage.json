@@ -1,0 +1,9 @@
+{
+  "_comment": "Phase 1 — scoring + auto-triage (see Architecture_Daigram.excalidraw). Re-load via env or edit threshold here.",
+
+  "enabled": true,
+  "threshold": 7.0,
+  "ultra_threshold": 4.0,
+  "lmstudio_url": "http://127.0.0.1:1234",
+  "bridge_triage": true
+}
