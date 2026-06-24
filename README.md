@@ -8,7 +8,7 @@ All application code lives in [`lmstudio/`](./lmstudio/).
 
 ## Architecture
 
-Full diagram (editable): **[Architecture_Daigram.excalidraw](./Architecture_Daigram.excalidraw)**
+Full diagram: **[Architecture_Daigram.excalidraw](./Architecture_Daigram.excalidraw)**
 
 ```mermaid
 flowchart TB
