@@ -1,0 +1,78 @@
+{
+  "mcpServers": {
+    "coding-tools": {
+      "command": "uv",
+      "args": [
+        "run", "--directory", "__LMSTUDIO__",
+        "python", "servers/coding_tools.py", "--root", "__SANDBOX__"
+      ],
+      "env": {}
+    },
+    "web-tools": {
+      "command": "uv",
+      "args": [
+        "run", "--directory", "__LMSTUDIO__",
+        "python", "servers/web_tools.py"
+      ],
+      "env": {}
+    },
+    "docker-tools": {
+      "command": "uv",
+      "args": [
+        "run", "--directory", "__LMSTUDIO__",
+        "python", "servers/docker_tools.py"
+      ],
+      "env": {}
+    },
+    "codebase-memory": {
+      "command": "__CODEBASE_MEMORY_BIN__",
+      "args": [],
+      "env": {}
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {
+        "MEMORY_FILE_PATH": "__LMSTUDIO__/.agent-memory.json"
+      }
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "env": {}
+    },
+    "git": {
+      "command": "uvx",
+      "args": ["mcp-server-git"],
+      "env": {}
+    },
+    "time": {
+      "command": "uvx",
+      "args": ["mcp-server-time"],
+      "env": {}
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "env": {}
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "env": {}
+    },
+    "think-delegate": {
+      "command": "uv",
+      "args": [
+        "run", "--directory", "__LMSTUDIO__",
+        "python", "servers/think_delegate.py"
+      ],
+      "env": {
+        "THINK_PROVIDER": "claude-cli",
+        "THINK_MODEL": "sonnet",
+        "THINK_DEEP_MODEL": "opus",
+        "THINK_USE_SUBSCRIPTION": "1"
+      }
+    }
+  }
+}

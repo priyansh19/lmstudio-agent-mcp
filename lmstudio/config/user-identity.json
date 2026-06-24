@@ -1,0 +1,7 @@
+{
+  "_comment": "Default git/GitHub identity for bootstrap and agent memory. No secrets — tokens stay in keychain / ~/.lmstudio/mcp.json.",
+  "git_name": "priyansh19",
+  "git_email": "priyansh.9071@gmail.com",
+  "github_login": "priyansh19",
+  "github_primary_email": "priyansh.9071@gmail.com"
+}

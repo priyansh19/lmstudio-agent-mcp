@@ -1,0 +1,7 @@
+{
+  "_comment": "Allowed roots for openclaw-tools and coding-tools MCP servers. Use __HOME__ for your entire home folder. Re-apply: cd lmstudio && uv run python ../openclaw/scripts/setup_openclaw_mcp.py",
+
+  "allowedRoots": [
+    "__HOME__"
+  ]
+}

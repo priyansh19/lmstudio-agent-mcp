@@ -1,0 +1,82 @@
+{
+  "_comment": "OpenClaw MCP profile — applied by openclaw/scripts/setup_openclaw_mcp.py",
+
+  "openclaw-tools": {
+    "command": "uv",
+    "args": [
+      "run", "--directory", "__LMSTUDIO__",
+      "python", "__OPENCLAW__/servers/openclaw_tools.py",
+      "--root", "__SANDBOX__"
+    ],
+    "env": {
+      "OPENCLAW_REPO": "__LMSTUDIO__"
+    }
+  },
+
+  "coding-tools": {
+    "command": "uv",
+    "args": [
+      "run", "--directory", "__LMSTUDIO__",
+      "python", "servers/coding_tools.py",
+      "--root", "__SANDBOX__"
+    ],
+    "env": {},
+    "toolFilter": {
+      "include": [
+        "list_allowed_roots",
+        "list_directory",
+        "read_file",
+        "grep",
+        "find_files"
+      ]
+    }
+  },
+
+  "triage": {
+    "command": "uv",
+    "args": [
+      "run", "--directory", "__LMSTUDIO__",
+      "python", "servers/triage_tools.py"
+    ],
+    "env": {
+      "LMSTUDIO_URL": "http://127.0.0.1:1234"
+    }
+  },
+
+  "think-delegate": {
+    "command": "uv",
+    "args": [
+      "run", "--directory", "__LMSTUDIO__",
+      "python", "servers/think_delegate.py"
+    ],
+    "env": {
+      "THINK_PROVIDER": "claude-cli",
+      "THINK_MODEL": "sonnet",
+      "THINK_DEEP_MODEL": "opus",
+      "THINK_USE_SUBSCRIPTION": "1",
+      "CLAUDE_CLI_TIMEOUT": "300"
+    }
+  },
+
+  "web-tools": {
+    "command": "uv",
+    "args": [
+      "run", "--directory", "__LMSTUDIO__",
+      "python", "servers/web_tools.py"
+    ],
+    "env": {}
+  },
+
+  "memory": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-memory"],
+    "env": {
+      "MEMORY_FILE_PATH": "__LMSTUDIO__/.agent-memory.json"
+    }
+  },
+
+  "_profile_notes": {
+    "disabled_servers": ["playwright", "docker-tools"],
+    "coding_tools_include": ["list_allowed_roots", "list_directory", "read_file", "grep", "find_files"]
+  }
+}

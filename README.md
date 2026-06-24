@@ -1,204 +1,111 @@
-# LM Studio Agent MCP — give your local model real powers
+# Local Agent MCP
 
-> **Full setup guide:** see **[SETUP.md](SETUP.md)** — step-by-step instructions to
-> reproduce this entire stack on a fresh Mac with one command (`./bootstrap.sh`).
+Hybrid **local-first LLM agent** built on [LM Studio](https://lmstudio.ai): MCP tool servers, prompt scoring/triage, vector RAG memory, and Claude CLI delegation for hard tasks.
 
-This turns a local LLM running in **LM Studio** (e.g. Gemma) from a chatbot into
-an **autonomous agent** that can read/write/edit files, search code, run shell
-commands, execute Python/Node, browse the web, and use git.
-
-It ships two things:
-
-1. **MCP servers** (`mcp_server/`) — standard Model Context Protocol tool
-   connectors you can plug into LM Studio's GUI via `mcp.json`.
-2. **A standalone agent** (`agent/local_agent.py`) — a terminal coding agent that
-   uses LM Studio's `.act()` multi-round tool-calling loop with the same tools.
-
-Everything is sandboxed to a workspace root you choose, with a guardrail
-blocklist on destructive shell commands.
+All application code lives in [`lmstudio/`](./lmstudio/).
 
 ---
 
-## How it actually works
+## Architecture
 
-LLMs can only output text. "Tool use" means: the model emits a structured
-request → your code runs the function → the result is fed back → the model
-continues. LM Studio supports this two ways, and this repo uses both:
+Full diagram (editable): **[Architecture_Daigram.excalidraw](./Architecture_Daigram.excalidraw)**
 
-| Path | What it is | Best for |
-| --- | --- | --- |
-| **MCP servers** (`config/mcp.json`) | Tools exposed over the Model Context Protocol; LM Studio's chat UI calls them | Chatting in the LM Studio app with tools |
-| **`.act()` agent** (`agent/local_agent.py`) | A Python loop that auto-runs tools across multiple rounds | A real autonomous coding agent in your terminal |
+```mermaid
+flowchart TB
+  UP[User Prompt] --> SC[Score Prompt]
+  SC --> SA[Local LLM Scoring Agent]
+  SA -->|score ≥ 7| LA[Local LLM Agent]
+  SA -->|score < 7| TA[Triaging Agent]
+  TA --> MCP[MCP think-delegate]
+  MCP --> CL[Claude Chat]
+  CL --> R1[Response]
+
+  UP --> LA
+  LA --> WM[Working Memory / Context]
+  LA --> SP[System Prompt]
+  LA --> CH[Chat History]
+  LA --> PM[Procedural Memory — Skill.md]
+  LA --> SM[Semantic Memory — Vector RAG top-k]
+  LA --> EM[Episodic Memory — Vector RAG top-k]
+  LA --> R2[Response]
+
+  R1 --> SAVE[Save Responses / Activities]
+  R2 --> SAVE
+  SAVE --> SUM[Summarizer Agent — Phase 3]
+  SUM -->|every N chats| DIST[Distill into facts]
+  DIST --> SM
+  DIST --> EM
+```
+
+| Phase | Status | Component |
+|---|---|---|
+| **1** | Done | Scoring + auto-triage → Claude when below threshold |
+| **2** | Done | Semantic + episodic vector stores, RAG top-k injection |
+| **3** | Planned | Summarizer agent (every N chats → distill facts) |
+| **4** | Planned | Procedural memory (`Skill.md` loader) |
 
 ---
 
-## Plug-and-play server catalog
-
-Beyond the custom servers below, this repo ships a curated catalog of verified
-community MCP servers (filesystem, fetch, memory, git, time, context7, playwright,
-GitHub, Google Workspace/Gmail, Slack, databases, and more). See
-[`CATALOG.md`](CATALOG.md). Install the zero-config ones into LM Studio in one
-command:
+## Quick start
 
 ```bash
-uv run python scripts/install_to_lmstudio.py            # no-key servers
-uv run python scripts/install_to_lmstudio.py --include-keys --only github google-workspace
+cd lmstudio
+./bootstrap.sh              # first-time setup
+lms server start            # LM Studio API
+lms load                    # load LLM + embedding model (for RAG)
+
+uv run python agent/local_agent.py --root ~/Desktop
 ```
 
-This merges them into `~/.lmstudio/mcp.json` (backing up your existing config).
+Install MCP servers into LM Studio:
 
-## Tools included
+```bash
+cd lmstudio
+uv run python scripts/install_to_lmstudio.py
+```
 
-**Filesystem & code (`coding_tools.py`)**
-`list_allowed_roots`, `list_directory`, `read_file`, `write_file`, `edit_file`,
-`create_directory`, `move_path`, `delete_path`, `find_files`, `grep`,
-`run_shell`, `run_python`, `run_node`, `git_status`, `git_diff`, `git_log`,
-`git_commit`.
-
-**Web (`web_tools.py`)**
-`fetch_url` (read any page as text), `web_search` (keyless DuckDuckGo search).
+Toggle servers in **LM Studio → Program → mcp.json**.
 
 ---
 
-## OpenClaw → LM Studio (swap models without config changes)
+## Custom MCP servers
 
-OpenClaw should **not** point directly at LM Studio's model list (that changes every
-time you load a different model). Instead, use the **bridge** — a stable OpenAI
-server that always exposes one model id: `local/current`.
+| Server | Phase | Doc |
+|---|---|---|
+| coding-tools | — | [coding-tools](./lmstudio/docs/servers/coding-tools.md) |
+| web-tools | — | [web-tools](./lmstudio/docs/servers/web-tools.md) |
+| think-delegate | — | [think-delegate](./lmstudio/docs/servers/think-delegate.md) |
+| triage | 1 | [triage](./lmstudio/docs/servers/triage.md) |
+| memory-rag | 2 | [memory-rag](./lmstudio/docs/servers/memory-rag.md) |
+| docker-tools | — | [docker-tools](./lmstudio/docs/servers/docker-tools.md) |
+| github-watch | — | [github-watch](./lmstudio/docs/servers/github-watch.md) |
 
-```
-OpenClaw  →  bridge :8765/v1  →  LM Studio :1234/v1  →  whatever model is loaded
-             model: local/current      (auto-resolved each request)
-```
+Full index: [lmstudio/docs/SERVERS.md](./lmstudio/docs/SERVERS.md)
 
-### One-time setup
+---
+
+## OpenAI-compatible bridge
+
+Optional stable endpoint for external clients (`local/current` always resolves to the loaded model):
 
 ```bash
-cd ~/Desktop/lmstudio-agent-mcp
-
-# 1) Configure OpenClaw (writes ~/.openclaw/openclaw.json once)
-uv run python scripts/setup_openclaw_lmstudio.py --with-mcp
-
-# 2) Auto-start bridge on every Mac login (recommended)
-bash scripts/install_bridge_launchagent.sh
-
-# Or run manually once:
-# uv run python agent/lmstudio_bridge.py
-
-# 3) LM Studio: load any model + keep server running
-lms server start
-
-# 4) Restart OpenClaw gateway
-openclaw gateway restart
-```
-
-After this, OpenClaw's primary model is **`local-agent/local/current`**. Change
-models in LM Studio anytime — OpenClaw config stays the same.
-
-Verify:
-```bash
+cd lmstudio
+uv run python agent/lmstudio_bridge.py   # http://127.0.0.1:8765/v1
 curl http://127.0.0.1:8765/health
-openclaw models status
 ```
-
-`--with-mcp` copies your LM Studio MCP servers into OpenClaw's `mcp.servers` so
-WhatsApp/Telegram messages get the same tools (coding-tools, github, codebase-memory, etc.).
-
-## Setup — one command
-
-**`bootstrap.sh`** is the single script that reproduces this entire stack on a fresh Mac:
-
-```bash
-cd ~/Desktop/lmstudio-agent-mcp
-./bootstrap.sh              # interactive (first time)
-./bootstrap.sh --yes        # accept recommended defaults
-./bootstrap.sh --minimal    # skip GitHub/Google/Slack prompts
-./bootstrap.sh --deps-only  # refresh Python deps only
-./bootstrap.sh --help
-```
-
-Non-interactive with secrets:
-```bash
-GITHUB_TOKEN=ghp_xxx GIT_NAME="you" GIT_EMAIL=you@mail.com ./bootstrap.sh --yes
-```
-
-`install.sh` and `setup.sh` are thin wrappers that call `bootstrap.sh`.
-
-<details>
-<summary>What bootstrap runs (9 steps)</summary>
-
-1. Prerequisites — Homebrew, uv, Node, LM Studio CLI
-2. Python dependencies (`uv sync`)
-3. Workspace sandbox (`~/Desktop` by default)
-4. codebase-memory-mcp + memory seed + repo index
-5. LM Studio MCP servers → `~/.lmstudio/mcp.json`
-6. GitHub (optional) — git identity, keychain, github + github-watch MCP
-7. Google / Brave / Firecrawl / Slack (optional)
-8. OpenClaw → stable bridge (`local-agent/local/current`)
-9. LaunchAgent — bridge auto-starts on Mac login
-
-</details>
-
-Then start LM Studio's server and load a tool-capable model:
-
-```bash
-npx lmstudio install-cli   # one time
-lms server start
-lms load                   # pick a model (bigger = better at tools)
-```
-
-> Model tip: tool use is much more reliable on capable instruct models. Gemma
-> works for simple tasks; for serious coding, a 7B+ tool-tuned model (e.g.
-> Qwen2.5-Coder-7B-Instruct) will behave far better.
 
 ---
 
-## Use it
+## Config
 
-### Autonomous CLI agent (recommended)
-
-```bash
-uv run python agent/local_agent.py --root "$HOME/Desktop"
-# optional: --model qwen2.5-coder-7b-instruct
-# one-shot:  --task "create a python script that prints fib(20) and run it"
-```
-
-Type a request; the agent plans, calls tools across multiple rounds, and
-verifies its own work.
-
-### Plug into the LM Studio app
-
-Open LM Studio → `Program` → `Edit mcp.json`, and merge the `mcpServers` block
-from [`config/mcp.json`](config/mcp.json) (or copy the whole file into
-`~/.lmstudio/mcp.json`). Toggle the servers on, then ask the model to do things
-in chat — it will request tool calls you approve.
-
-Edit the `--root` path in `config/mcp.json` to control which directory the tools
-may touch.
+| File | Purpose |
+|---|---|
+| `lmstudio/config/triage.json` | Scoring thresholds |
+| `lmstudio/config/memory.json` | RAG top-k, episodic auto-save |
+| `lmstudio/mcp/mcp.json` | MCP server definitions (source of truth) |
 
 ---
 
-## Safety
+## Branch note
 
-- All file/shell operations are confined to the configured workspace root(s).
-- Destructive commands (`rm -rf /`, `mkfs`, `sudo`, fork bombs, …) are blocked.
-- This is a **guardrail, not a jail.** Only point it at directories you're
-  willing to let a model modify, and review tool calls in the LM Studio UI.
-
----
-
-## Layout
-
-```
-lmstudio-agent-mcp/
-├── mcp_server/
-│   ├── coding_tools.py   # filesystem + shell + code + git MCP server
-│   └── web_tools.py      # web fetch + search MCP server
-├── agent/
-│   └── local_agent.py    # autonomous .act() terminal agent
-├── config/
-│   └── mcp.json          # LM Studio MCP connector config
-├── pyproject.toml        # deps (uv)
-├── requirements.txt      # deps (pip fallback)
-└── setup.sh              # one-shot setup
-```
+OpenClaw / WhatsApp integration was moved to the **`archive/openclaw`** branch. Main focuses on LM Studio + local models only.

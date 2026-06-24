@@ -1,0 +1,13 @@
+[project]
+name = "lmstudio-agent-mcp"
+version = "0.1.0"
+description = "MCP tool connectors + autonomous agent that give a local LM Studio model real coding powers"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.2.0",
+    "lmstudio>=1.5.0",
+]
+
+[tool.uv]
+package = false
