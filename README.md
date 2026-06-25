@@ -8,11 +8,9 @@ All application code lives in [`lmstudio/`](./lmstudio/).
 
 ## Architecture
 
-<p align="center">
-    <picture>
-        <img width="1423" height="557" alt="Image" src="https://github.com/user-attachments/assets/01bc939e-7a73-4164-aad5-83ab50c63219" />
-    </picture>
-</p>
+![Architecture diagram](./docs/architecture-diagram.png)
+
+Editable source: [Architecture_Daigram.excalidraw](./Architecture_Daigram.excalidraw)
 
 | Phase | Status | Component |
 |---|---|---|
