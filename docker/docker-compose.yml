@@ -1,0 +1,111 @@
+# LM Studio Agent — Docker stack
+#
+# Prerequisites on host:
+#   - LM Studio running with API server (lms server start && lms load)
+#   - Desktop data dirs: run ./docker/scripts/init_desktop_volumes.sh once
+#
+# Usage:
+#   cp docker/.env.example docker/.env   # edit paths + backup repo URL
+#   docker compose -f docker/docker-compose.yml --env-file docker/.env up -d
+
+name: lmstudio-agent
+
+services:
+  # Holds the semantic + episodic SQLite vector store on a Desktop bind mount.
+  vector-memory:
+    image: alpine:3.20
+    container_name: lmstudio-vector-memory
+    restart: unless-stopped
+    volumes:
+      - ${LMSTUDIO_AGENT_DATA_ROOT}/memory/vector:/data/vector
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /data/vector
+        touch /data/vector/vector-memory.db
+        echo "vector-memory ready at /data/vector/vector-memory.db"
+        tail -f /dev/null
+    healthcheck:
+      test: ["CMD", "test", "-f", "/data/vector/vector-memory.db"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Holds the knowledge-graph JSON memory on a Desktop bind mount.
+  graph-memory:
+    image: alpine:3.20
+    container_name: lmstudio-graph-memory
+    restart: unless-stopped
+    volumes:
+      - ${LMSTUDIO_AGENT_DATA_ROOT}/memory/graph:/data/graph
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /data/graph
+        touch /data/graph/agent-memory.json
+        echo "graph-memory ready at /data/graph/agent-memory.json"
+        tail -f /dev/null
+    healthcheck:
+      test: ["CMD", "test", "-f", "/data/graph/agent-memory.json"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Main agent runtime: OpenAI-compatible bridge (default) or local_agent via command override.
+  agent:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: lmstudio-agent:latest
+    container_name: lmstudio-agent
+    restart: unless-stopped
+    depends_on:
+      vector-memory:
+        condition: service_healthy
+      graph-memory:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${BRIDGE_PORT:-8765}:8765"
+    environment:
+      LMSTUDIO_URL: ${LMSTUDIO_URL:-http://host.docker.internal:1234}
+      BRIDGE_PORT: ${BRIDGE_PORT:-8765}
+      VECTOR_MEMORY_DB: /data/memory/vector/vector-memory.db
+      MEMORY_FILE_PATH: /data/memory/graph/agent-memory.json
+      SKILLS_DIR: /data/memory/skills
+      WORKSPACE_ROOTS: /data/workspace
+      RAG_ENABLED: ${RAG_ENABLED:-1}
+      SUMMARIZER_ENABLED: ${SUMMARIZER_ENABLED:-1}
+    volumes:
+      - ${LMSTUDIO_AGENT_DATA_ROOT}/memory/vector:/data/memory/vector
+      - ${LMSTUDIO_AGENT_DATA_ROOT}/memory/graph:/data/memory/graph
+      - ${LMSTUDIO_AGENT_DATA_ROOT}/memory/skills:/data/memory/skills
+      - ${LMSTUDIO_AGENT_DATA_ROOT}/workspace:/data/workspace
+    command: ["bridge"]
+
+  # Syncs Desktop memory files to a private GitHub repo for disaster recovery.
+  memory-backup:
+    build:
+      context: ./memory-backup
+    image: lmstudio-agent-memory-backup:latest
+    container_name: lmstudio-memory-backup
+    restart: unless-stopped
+    depends_on:
+      vector-memory:
+        condition: service_healthy
+      graph-memory:
+        condition: service_healthy
+    environment:
+      BACKUP_INTERVAL_SEC: ${BACKUP_INTERVAL_SEC:-300}
+      GIT_REMOTE: ${MEMORY_BACKUP_GIT_REMOTE:-}
+      GIT_BRANCH: ${MEMORY_BACKUP_GIT_BRANCH:-main}
+      GIT_USER_NAME: ${GIT_USER_NAME:-lmstudio-agent}
+      GIT_USER_EMAIL: ${GIT_USER_EMAIL:-agent@local}
+    volumes:
+      - ${LMSTUDIO_AGENT_DATA_ROOT}/memory/vector:/source/vector:ro
+      - ${LMSTUDIO_AGENT_DATA_ROOT}/memory/graph:/source/graph:ro
+      - ${LMSTUDIO_AGENT_DATA_ROOT}/memory/skills:/source/skills:ro
+      - ${LMSTUDIO_AGENT_DATA_ROOT}/backup:/repo

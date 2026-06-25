@@ -1,0 +1,14 @@
+.git
+.gitignore
+**/__pycache__
+**/*.pyc
+**/.venv
+**/.uv
+**/.DS_Store
+lmstudio/.agent-memory.json
+lmstudio/.vector-memory.db
+lmstudio/.bridge.log
+lmstudio/.vector-db-report.json
+lmstudio/.architecture-e2e-report.json
+docs/
+*.excalidraw

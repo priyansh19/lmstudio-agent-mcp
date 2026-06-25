@@ -21,6 +21,23 @@ Editable source: [Architecture_Daigram.excalidraw](./Architecture_Daigram.excali
 
 ---
 
+## Docker (Desktop volumes + private memory backup)
+
+Containerized bridge and agent with memory on **Desktop bind mounts** and automatic sync to a **private GitHub repo** for restore.
+
+```bash
+./docker/scripts/init_desktop_volumes.sh
+cp docker/.env.example docker/.env   # set MEMORY_BACKUP_GIT_REMOTE
+lms server start && lms load
+docker compose -f docker/docker-compose.yml --env-file docker/.env up -d --build
+```
+
+Restore on a new machine: `./docker/scripts/memory_restore.sh <your-private-repo-url>`
+
+Full guide: [lmstudio/docs/DOCKER.md](./lmstudio/docs/DOCKER.md)
+
+---
+
 ## Quick start
 
 ```bash

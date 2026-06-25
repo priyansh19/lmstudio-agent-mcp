@@ -9,4 +9,4 @@ lmstudio/.agent-memory.json
 lmstudio/.bridge.log
 lmstudio/.vector-memory.db
 lmstudio/.vector-db-report.json
-lmstudio/.architecture-e2e-report.json
+docker/.env

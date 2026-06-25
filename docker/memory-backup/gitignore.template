@@ -1,0 +1,8 @@
+# Memory backup repo — safe to commit to a private GitHub repository
+*.log
+.DS_Store
+__pycache__/
+
+# Keep the SQLite WAL sidecars if SQLite enables WAL mode later
+*.db-wal
+*.db-shm
